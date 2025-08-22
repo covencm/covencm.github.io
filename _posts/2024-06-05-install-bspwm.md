@@ -1,5 +1,5 @@
 ---
-title: "bspwm.elf64"
+title: "bspwm"
 author: coven_cm
 date: 2024-06-05T19:04:24+05:30
 categories: [os, linux ]
