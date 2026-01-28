@@ -16,8 +16,7 @@ timezone:
 
 title: Coven # the main title
 
-tagline: Incompressible # it will display as the subtitle
-
+tagline:  hobbyist reverse engineer
 description: >- # used by seo meta and the atom feed
  Linux kernel exploits, binary analysis, and network security research. Technical guides and vulnerability analysis.
 
@@ -98,7 +97,7 @@ theme_mode: # [light | dark]
 cdn:
 
 # the avatar on sidebar, support local or CORS resources
-avatar: '/assets/pfp.png'
+avatar: '/assets/pfp.jpg'
 
 # The URL of the site-wide social preview image used in SEO `og:image` meta tag.
 # It can be overridden by a customized `page.image` in front matter.

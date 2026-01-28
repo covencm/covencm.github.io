@@ -1,5 +1,5 @@
 ---
-title: "nvidia-470xx-install-arch"
+title: "Nvidia 470xx Drivers Install Guide"
 author: coven_cm
 categories: [os, linux, nvidia ]
 draft: true 

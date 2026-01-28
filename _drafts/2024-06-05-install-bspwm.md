@@ -1,10 +1,10 @@
 ---
-title: "bspwm"
+title: "My Setup"
 author: coven_cm
 date: 2024-06-05T19:04:24+05:30
-categories: [os, linux ]
-draft: true 
-tags: ["linux","theme"]
+#categories: [os, linux ]
+draft: true
+#tags: ["linux","theme"]
 ---
 **Warning:** These are my personal configurations. You may need to edit  these files to fit your own preferences and setup.
 
