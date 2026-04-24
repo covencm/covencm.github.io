@@ -1,0 +1,199 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Understanding Input Output Redirections | Esrie's Blog</title><meta name="author" content="esrie"><meta name="copyright" content="esrie"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="I&#x2F;O redirection in Linux is a mechanism that allows you to change the destination of input and output for commands. by default, linux commands read from the standard input (stdin) and write to t">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Understanding Input Output Redirections">
+<meta property="og:url" content="http://covencm.github.io/2024/09/13/2024-09-13-dataflow/index.html">
+<meta property="og:site_name" content="Esrie&#39;s Blog">
+<meta property="og:description" content="I&#x2F;O redirection in Linux is a mechanism that allows you to change the destination of input and output for commands. by default, linux commands read from the standard input (stdin) and write to t">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://covencm.github.io/img/ram.jpeg">
+<meta property="article:published_time" content="2024-09-13T11:28:03.000Z">
+<meta property="article:modified_time" content="2026-04-24T20:39:48.093Z">
+<meta property="article:author" content="esrie">
+<meta property="article:tag" content="linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://covencm.github.io/img/ram.jpeg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Understanding Input Output Redirections",
+  "url": "http://covencm.github.io/2024/09/13/2024-09-13-dataflow/",
+  "image": "http://covencm.github.io/img/ram.jpeg",
+  "datePublished": "2024-09-13T11:28:03.000Z",
+  "dateModified": "2026-04-24T20:39:48.093Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "esrie",
+      "url": "http://covencm.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://covencm.github.io/2024/09/13/2024-09-13-dataflow/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.json","preload":false,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"No results found for: ${query}","hits_stats":"${hits} articles found"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: 'Copy Successful',
+    error: 'Copy Failed',
+    noSupport: 'Browser Not Supported'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: 'Just now',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: {"chs_to_cht":"You have switched to Traditional Chinese","cht_to_chs":"You have switched to Simplified Chinese","day_to_night":"You have switched to Dark Mode","night_to_day":"You have switched to Light Mode","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: 'Load More'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Understanding Input Output Redirections',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 8.1.1"></head><body><div class="bg-animation" id="web_bg" style="background-color: #0A0A0A;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/cat.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">3</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">4</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">3</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/ram.jpeg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Esrie's Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Understanding Input Output Redirections</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  Back to Home</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> Search</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Understanding Input Output Redirections</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2024-09-13T11:28:03.000Z" title="Created 2024-09-13 16:58:03">2024-09-13</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2026-04-24T20:39:48.093Z" title="Updated 2026-04-25 02:09:48">2026-04-25</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/os/">os</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/os/linux/">linux</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post Views:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p> I&#x2F;O redirection in Linux is a mechanism that allows you to change the destination of input and output for commands. by default, linux commands read from the standard input (stdin) and write to the standard output (stdout) and standard error (stderr). Redirection enables you to direct these streams.</p>
+<h3 id="Basics-of-I-O-Redirection"><a href="#Basics-of-I-O-Redirection" class="headerlink" title="Basics of I&#x2F;O Redirection"></a>Basics of I&#x2F;O Redirection</h3><ol>
+<li><p><strong>stdin, stdout, and stderr</strong></p>
+<ul>
+<li><strong>Standard Input (stdin)</strong>: This is the default source of input for commands, typically the keyboard.</li>
+<li><strong>Standard Output (stdout)</strong>: This is the default destination for command output, typically the terminal.</li>
+<li><strong>Standard Error (stderr)</strong>: This is the default destination for error messages, also typically the terminal.</li>
+</ul>
+</li>
+<li><p><strong>Operators</strong></p>
+<ul>
+<li><strong><code>&gt;</code></strong>: Redirects stdout to a file, overwriting the file if it already exists.</li>
+<li><strong><code>&gt;&gt;</code></strong>: Redirects stdout to a file, appending to the file if it already exists.</li>
+<li><strong><code>&lt;</code></strong>: Redirects stdin from a file.</li>
+<li><strong><code>2&gt;</code></strong>: Redirects stderr to a file, overwriting the file if it already exists.</li>
+<li><strong><code>2&gt;&gt;</code></strong>: Redirects stderr to a file, appending to the file if it already exists.</li>
+<li><strong><code>&amp;&gt;</code></strong>: Redirects both stdout and stderr to a file.</li>
+</ul>
+</li>
+</ol>
+<h3 id="Some-Example-Techniques"><a href="#Some-Example-Techniques" class="headerlink" title="Some Example Techniques"></a>Some Example Techniques</h3><p>  <strong>Pipes (<code>|</code>)</strong>: In Unix Like systems pipes allow you to use the output of one command as the input to another.<br>   <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"> esrie@mint:~$ <span class="built_in">ls</span> -l | grep Hello</span><br><span class="line">-rw-rw-r--  1 esrie esrie    0 Sep 13 21:37 Hello</span><br></pre></td></tr></table></figure></p>
+<p><strong>File Descriptor Redirection</strong></p>
+<ul>
+<li><strong><code>exec</code></strong>: You can use <code>exec</code> to redirect file descriptors.  to redirect both stdout and stderr in a script. This command saves the  current stdout and stderr to file descriptors 3 and 4. later you can restore em if needed.</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">exec</span> 3&gt;&amp;1 4&gt;&amp;2</span><br></pre></td></tr></table></figure>
+
+<p><strong>Redirection Examples</strong></p>
+<p>Redirect Output and Errors Simultaneously. </p>
+<p>Imagine you want to run a command and log both its stdout and 	stderr into different files while also viewing the output on the term you can achive this using tee command combined with redirection. </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">com &gt; &gt;(<span class="built_in">tee</span> output.log) 2&gt; &gt;(<span class="built_in">tee</span> error.log &gt;&amp;2)</span><br></pre></td></tr></table></figure>
+
+
+<p>Redirect Outputs with Conditional Execution </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">com &gt; output.log 2&gt; error.log &amp;&amp; <span class="built_in">echo</span> <span class="string">&quot;com succeeded&quot;</span> &gt;&gt; output.log || <span class="built_in">echo</span> <span class="string">&quot;com failed&quot;</span> &gt;&gt; error.log`</span><br></pre></td></tr></table></figure>
+<p>These examples should give you some understanding of how to use redirections with common commands in linux. </p>
+<p>I also recommend reading this excellent blog post about <a target="_blank" rel="noopener" href="https://www.rozmichelle.com/pipes-forks-dups/">pipes,forks, and dups by Rozmichelle</a>. which provides an excellent in-depth understanding about i&#x2F;o dataflow.</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>Author: </span><span class="post-copyright-info"><a href="http://covencm.github.io">esrie</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>Link: </span><span class="post-copyright-info"><a href="http://covencm.github.io/2024/09/13/2024-09-13-dataflow/">http://covencm.github.io/2024/09/13/2024-09-13-dataflow/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>Copyright Notice: </span><span class="post-copyright-info">All articles on this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless otherwise stated.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/linux/">linux</a></div><div class="post-share"><div class="social-share" data-image="/img/ram.jpeg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2026/04/21/2025-08-21-nvidia-470xx-install-arch/" title="Nvidia 470xx Drivers"><img class="cover" src="/img/nvidia.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">Previous</div><div class="info-item-2">Nvidia 470xx Drivers</div></div><div class="info-2"><div class="info-item-1">The NVIDIA 470xx driver series is a legacy branch designed for older NVIDIA graphics cards that are no longer supported by the latest driver releases. These drivers are essential for users with legacy GPUs who want to maintain proper graphics acceleration and compatibility with modern Linux distributions.This driver branch supports GPUs from the GeForce 600 series through some 900 series cards, as well as corresponding Quadro and Tesla models. While these are legacy drivers, they still receiv...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/04/21/2025-08-21-nvidia-470xx-install-arch/" title="Nvidia 470xx Drivers"><img class="cover" src="/img/nvidia.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-04-21</div><div class="info-item-2">Nvidia 470xx Drivers</div></div><div class="info-2"><div class="info-item-1">The NVIDIA 470xx driver series is a legacy branch designed for older NVIDIA graphics cards that are no longer supported by the latest driver releases. These drivers are essential for users with legacy GPUs who want to maintain proper graphics acceleration and compatibility with modern Linux distributions.This driver branch supports GPUs from the GeForce 600 series through some 900 series cards, as well as corresponding Quadro and Tesla models. While these are legacy drivers, they still receiv...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/cat.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">esrie</div><div class="author-info-description">20 | reverse-engineering | binary analysis</div><div class="site-data"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">3</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">4</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">3</div></a></div><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/covencm" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://x.com/methsithh" target="_blank" title="Twitter"><i class="fa-brands fa-square-x-twitter" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:madhukamj@proton.me" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">Security Researcher Interested In Systems, Security, And Networking</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Contents</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Basics-of-I-O-Redirection"><span class="toc-number">1.</span> <span class="toc-text">Basics of I&#x2F;O Redirection</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Some-Example-Techniques"><span class="toc-number">2.</span> <span class="toc-text">Some Example Techniques</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Posts</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/04/23/the-stack/" title="The Stack [Writeup]"><img src="/img/pwn.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="The Stack [Writeup]"/></a><div class="content"><a class="title" href="/2026/04/23/the-stack/" title="The Stack [Writeup]">The Stack [Writeup]</a><time datetime="2026-04-22T18:33:44.000Z" title="Created 2026-04-23 00:03:44">2026-04-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/04/21/2025-08-21-nvidia-470xx-install-arch/" title="Nvidia 470xx Drivers"><img src="/img/nvidia.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Nvidia 470xx Drivers"/></a><div class="content"><a class="title" href="/2026/04/21/2025-08-21-nvidia-470xx-install-arch/" title="Nvidia 470xx Drivers">Nvidia 470xx Drivers</a><time datetime="2026-04-21T17:53:56.601Z" title="Created 2026-04-21 23:23:56">2026-04-21</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/09/13/2024-09-13-dataflow/" title="Understanding Input Output Redirections"><img src="/img/ram.jpeg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Understanding Input Output Redirections"/></a><div class="content"><a class="title" href="/2024/09/13/2024-09-13-dataflow/" title="Understanding Input Output Redirections">Understanding Input Output Redirections</a><time datetime="2024-09-13T11:28:03.000Z" title="Created 2024-09-13 16:58:03">2024-09-13</time></div></div></div></div></div></div></main><footer id="footer" style="background: transparent;"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By esrie</span><span class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.1</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.4</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Reading Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Toggle Between Light and Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle Between Single-column and Double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="Settings"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back to Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">Search</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  Loading Database</span></div><div class="local-search-input"><input placeholder="Search for Posts" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.5.4"></script></div></div></body></html>
