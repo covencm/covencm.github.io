@@ -1,4 +1,4 @@
-baseURL = 'https://covencm.github.io/blog/'
+baseURL = 'https://covencm.github.io'
 locale = 'en-us'
 title = 'methsith'
 theme = 'Etch'
