@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en"><head><script src="/blog/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=blog/livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ReverseEngineer">
+    
+    <link rel="shortcut icon" href="http://localhost:1313/blog/favicon.ico">
+    
+    <link rel="stylesheet" href="/blog/css/style.min.css">
+
+    <link rel="canonical" href="http://localhost:1313/blog/nvidia-470xx-drivers-install-guide/" />
+    <title>Nvidia 470xx Drivers Install Guide</title>
+</head>
+<body><header id="banner">
+    <h2><a href="http://localhost:1313/blog/">methsith</a></h2>
+    <nav>
+        <ul>
+            <li>
+                <a href="/blog/" title="posts">posts</a>
+            </li><li>
+                <a href="/blog/about/" title="about">about</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main id="content">
+<article>
+    <header id="post-header">
+        <h1>Nvidia 470xx Drivers Install Guide</h1>
+        <div>
+                <time>August 21, 2024</time>
+            </div>
+    </header><p>The NVIDIA 470xx driver series is a legacy branch designed for older NVIDIA graphics cards that are no longer supported by the latest driver releases. These drivers are essential for users with legacy GPUs who want to maintain proper graphics acceleration and compatibility with modern Linux distributions.
+This driver branch supports GPUs from the GeForce 600 series through some 900 series cards, as well as corresponding Quadro and Tesla models. While these are legacy drivers, they still receive critical security updates and bug fixes from NVIDIA.</p>
+<p><strong>This article is recommended for people who still use Kepler (NVE0) series, GeForce 400/500/600 series cards or Tesla (NV50/G80-90-GT2XX) cards.</strong></p>
+<p><strong>If you are using a GPU that supports Maxwell or higher architecture, it will be much easier for you to install.</strong></p>
+<h2 id="prerequisites-for-installing-and-building-packages">Prerequisites for installing and building packages</h2>
+<p>First, update your system and install the required packages and kernel headers. After that, you need to enable 32-bit support by uncommenting the multilib repository. You are also going to need an AUR helper.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">#!/bin/bash</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">sudo pacman -Syu --noconfirm
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">sudo pacman -S base-devel git vim --needed --noconfirm
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nv">KERNEL</span><span class="o">=</span><span class="k">$(</span>uname -r <span class="p">|</span> cut -d<span class="s1">&#39;-&#39;</span> -f2-<span class="k">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="o">[[</span> <span class="nv">$KERNEL</span> <span class="o">==</span> *<span class="s2">&#34;zen&#34;</span>* <span class="o">]]</span><span class="p">;</span> <span class="k">then</span>
+</span></span><span class="line"><span class="cl">    sudo pacman -S linux-zen-headers --noconfirm
+</span></span><span class="line"><span class="cl"><span class="k">elif</span> <span class="o">[[</span> <span class="nv">$KERNEL</span> <span class="o">==</span> *<span class="s2">&#34;lts&#34;</span>* <span class="o">]]</span><span class="p">;</span> <span class="k">then</span>
+</span></span><span class="line"><span class="cl">    sudo pacman -S linux-lts-headers --noconfirm
+</span></span><span class="line"><span class="cl"><span class="k">elif</span> <span class="o">[[</span> <span class="nv">$KERNEL</span> <span class="o">==</span> *<span class="s2">&#34;hardened&#34;</span>* <span class="o">]]</span><span class="p">;</span> <span class="k">then</span>
+</span></span><span class="line"><span class="cl">    sudo pacman -S linux-hardened-headers --noconfirm
+</span></span><span class="line"><span class="cl"><span class="k">else</span>
+</span></span><span class="line"><span class="cl">    sudo pacman -S linux-headers --noconfirm
+</span></span><span class="line"><span class="cl"><span class="k">fi</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">sudo sed -i <span class="s1">&#39;/\[multilib\]/,/Include = \/etc\/pacman.d\/mirrorlist/ s/^#//&#39;</span> /etc/pacman.conf
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">sudo pacman -Sy --noconfirm
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">git clone https://aur.archlinux.org/yay.git
+</span></span><span class="line"><span class="cl"><span class="nb">cd</span> yay
+</span></span><span class="line"><span class="cl">makepkg -si --noconfirm
+</span></span><span class="line"><span class="cl"><span class="nb">cd</span> ..
+</span></span><span class="line"><span class="cl">rm -rf yay
+</span></span></code></pre></div><h2 id="installing-the-base-driver-and-opengl-packages">Installing the base driver and OpenGL packages</h2>
+<p>If you are unsure about your NVIDIA card&rsquo;s supported driver family,  <a href="https://nouveau.freedesktop.org/CodeNames.html">you can find it  here</a></p>
+<table>
+	<thead>
+			<tr>
+					<th>Driver name</th>
+					<th>Kernel</th>
+					<th>Base driver</th>
+					<th>OpenGL</th>
+					<th>OpenGL (multilib)</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Turing (NV160/TUXXX) and newer</td>
+					<td>linux</td>
+					<td>nvidia-open</td>
+					<td>nvidia-utils</td>
+					<td>lib32-nvidia-utils</td>
+			</tr>
+			<tr>
+					<td>Turing (NV160/TUXXX) and newer</td>
+					<td>any other kernel</td>
+					<td>nvidia-open-dkms</td>
+					<td>nvidia-utils</td>
+					<td>lib32-nvidia-utils</td>
+			</tr>
+			<tr>
+					<td>Maxwell (NV110) series up to Ada Lovelace (NV190/ADXXX)</td>
+					<td>linux</td>
+					<td>nvidia</td>
+					<td>nvidia-utils</td>
+					<td>lib32-nvidia-utils</td>
+			</tr>
+			<tr>
+					<td>Maxwell (NV110) series up to Ada Lovelace (NV190/ADXXX)</td>
+					<td>linux-lts</td>
+					<td>nvidia</td>
+					<td>nvidia-utils</td>
+					<td>lib32-nvidia-utils</td>
+			</tr>
+			<tr>
+					<td>Maxwell (NV110) series up to Ada Lovelace (NV190/ADXXX)</td>
+					<td>any other kernel</td>
+					<td>nvidia-dkms</td>
+					<td>nvidia-utils</td>
+					<td>lib32-nvidia-utils</td>
+			</tr>
+			<tr>
+					<td>Kepler (NVE0) series</td>
+					<td>any</td>
+					<td>nvidia-470xx-dkms</td>
+					<td>nvidia-470xx-utils</td>
+					<td>lib32-nvidia-470xx-utils</td>
+			</tr>
+			<tr>
+					<td>GeForce 400/500/600 series cards [NVCx and NVDx]</td>
+					<td>any</td>
+					<td>nvidia-390xx-dkms</td>
+					<td>nvidia-390xx-utils</td>
+					<td>lib32-nvidia-390xx-utils</td>
+			</tr>
+			<tr>
+					<td>Tesla (NV50/G80-90-GT2XX)</td>
+					<td>any</td>
+					<td>nvidia-340xx-dkms</td>
+					<td>nvidia-340xx-utils</td>
+					<td>lib32-nvidia-340xx-utils</td>
+			</tr>
+	</tbody>
+</table>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Then install the correct drivers acording to the chart.  </span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Example :</span>
+</span></span><span class="line"><span class="cl">             yay -S nvidia-470xx-dkms nvidia-470xx-utils lib32-nvidia-470xx-utils
+</span></span></code></pre></div><h2 id="setting-the-kernel-parameter-and-add-early-loading-of-nvidia--modules">Setting the Kernel Parameter and Add Early Loading of NVIDIA  Modules</h2>
+<p>If you use GRUB as the bootloader run,</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">sudo vim /etc/default/grub
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Find the line that contains <span class="s2">&#34;GRUB_CMDLINE_LINUX_DEFAULT&#34;</span> and add these two parameters: nvidia-drm.modeset<span class="o">=</span><span class="m">1</span> nvidia-drm.fbdev<span class="o">=</span><span class="m">1</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Example </span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="nv">GRUB_CMDLINE_LINUX_DEFAULT</span><span class="o">=</span><span class="s2">&#34;quiet splash nvidia-drm.modeset=1 nvidia-drm.fbdev=1&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Update grub config </span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    sudo grub-mkconfig -o /boot/grub/grub.cfg
+</span></span></code></pre></div><p>if you don&rsquo;t use GRUB as the bootloader, please check the documentation of your bootloader to find out how to add kernel parameters. <a href="https://wiki.gentoo.org/wiki/LILO">LILO</a> <a href="https://wiki.archlinux.org/title/Kernel_parameters#systemd-boot">systemd-boot</a>  <a href="https://wiki.archlinux.org/title/Kernel_parameters#Limine">Limine</a></p>
+<h2 id="enable-early-loading-of-nvidia-modules">Enable Early Loading of NVIDIA Modules</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-zsh" data-lang="zsh"><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">sudo vim /etc/mkinitcpio.conf
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Find the line that says  &#34; HOOKS=() &#34; and locate the word &#34; kms &#34;  in the parentheses and remove it. </span>
+</span></span><span class="line"><span class="cl"><span class="c1"># after that Find the line that says MODULES=() </span>
+</span></span><span class="line"><span class="cl"><span class="c1"># Modify the line to:</span>
+</span></span><span class="line"><span class="cl">                     <span class="nv">MODULES</span><span class="o">=(</span>nvidia nvidia_modeset nvidia_uvm nvidia_drm<span class="o">)</span>
+</span></span><span class="line"><span class="cl">                     
+</span></span><span class="line"><span class="cl"><span class="c1"># Rebuild the initramfs with</span>
+</span></span><span class="line"><span class="cl">                     sudo mkinitcpio -P
+</span></span></code></pre></div><h2 id="pacmanhook">pacman.hook</h2>
+<p>Use a pacman hook to auto-update initramfs after NVIDIA upgrades:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-zsh" data-lang="zsh"><span class="line"><span class="cl"><span class="o">[</span>Trigger<span class="o">]</span>
+</span></span><span class="line"><span class="cl"><span class="nv">Operation</span><span class="o">=</span>Install
+</span></span><span class="line"><span class="cl"><span class="nv">Operation</span><span class="o">=</span>Upgrade
+</span></span><span class="line"><span class="cl"><span class="nv">Operation</span><span class="o">=</span>Remove
+</span></span><span class="line"><span class="cl"><span class="nv">Type</span><span class="o">=</span>Package
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># ** IMPORTANT  ** Change nvidia to your specific driver package, e.g., nvidia-470xx-dkms</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># e.g:  Modify Target=nvidia to Target=nvidia-470xx-dkms</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">#Target=nvidia </span>
+</span></span><span class="line"><span class="cl"><span class="nv">Target</span><span class="o">=</span>nvidia-470xx-dkms
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nv">Target</span><span class="o">=</span>nvidia-open
+</span></span><span class="line"><span class="cl"><span class="nv">Target</span><span class="o">=</span>nvidia-lts
+</span></span><span class="line"><span class="cl"><span class="c1"># If running a different kernel, modify below to match</span>
+</span></span><span class="line"><span class="cl"><span class="nv">Target</span><span class="o">=</span>linux
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>Action<span class="o">]</span>
+</span></span><span class="line"><span class="cl"><span class="nv">Description</span><span class="o">=</span>Updating NVIDIA module in initcpio
+</span></span><span class="line"><span class="cl"><span class="nv">Depends</span><span class="o">=</span>mkinitcpio
+</span></span><span class="line"><span class="cl"><span class="nv">When</span><span class="o">=</span>PostTransaction
+</span></span><span class="line"><span class="cl">NeedsTargets
+</span></span><span class="line"><span class="cl"><span class="nv">Exec</span><span class="o">=</span>/bin/sh -c <span class="s1">&#39;while read -r trg; do case $trg in linux*) exit 0; esac; done; /usr/bin/mkinitcpio -P&#39;</span>
+</span></span></code></pre></div><p>After that you need to Move the file to <strong>/etc/pacman.d/hooks/</strong> If the hooks folder doesn&rsquo;t already exist, you may need to create a new one.</p>
+<h2 id="thats-it">That&rsquo;s it</h2>
+<p>Now you can reboot and enjoy!</p>
+<p>In case you face any issues related to NVIDIA graphics, you can check the <a href="https://wiki.archlinux.org/title/NVIDIA/Troubleshooting">ArchWiki nvidia troubleshooting guide</a> .</p>
+</article>
+
+        </main><footer id="footer">
+    Copyright © 2025 methsith
+</footer>
+</body>
+</html>

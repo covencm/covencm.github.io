@@ -1,0 +1,47 @@
+
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>http://localhost:1313/blog/categories/</loc>
+    <lastmod>2025-08-28T11:34:14+05:30</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/blog/categories/linux/</loc>
+    <lastmod>2025-08-28T11:34:14+05:30</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/blog/tags/linux/</loc>
+    <lastmod>2025-08-28T11:34:14+05:30</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/blog/</loc>
+    <lastmod>2025-08-28T11:34:14+05:30</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/blog/categories/nvidia/</loc>
+    <lastmod>2025-08-28T11:34:14+05:30</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/blog/tags/nvidia/</loc>
+    <lastmod>2025-08-28T11:34:14+05:30</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/blog/categories/os/</loc>
+    <lastmod>2025-08-28T11:34:14+05:30</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/blog/posts/</loc>
+    <lastmod>2025-08-28T11:34:14+05:30</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/blog/stack-writeup/</loc>
+    <lastmod>2025-08-28T11:34:14+05:30</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/blog/tags/</loc>
+    <lastmod>2025-08-28T11:34:14+05:30</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/blog/understanding-input-output-redirections-on-linux/</loc>
+    <lastmod>2024-09-13T16:24:19+05:30</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/blog/nvidia-470xx-drivers-install-guide/</loc>
+    <lastmod>2024-08-21T19:04:24+05:30</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/blog/bspwm/</loc>
+    <lastmod>2024-06-05T19:04:24+05:30</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/blog/about/</loc>
+  </url>
+</urlset>

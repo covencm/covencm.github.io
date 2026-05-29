@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en"><head><script src="/blog/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=blog/livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ReverseEngineer">
+    
+    <link rel="shortcut icon" href="http://localhost:1313/blog/favicon.ico">
+    
+    <link rel="stylesheet" href="/blog/css/style.min.css">
+
+    <link rel="canonical" href="http://localhost:1313/blog/stack-writeup/" />
+    <title>Stack Writeup</title>
+</head>
+<body><header id="banner">
+    <h2><a href="http://localhost:1313/blog/">methsith</a></h2>
+    <nav>
+        <ul>
+            <li>
+                <a href="/blog/" title="posts">posts</a>
+            </li><li>
+                <a href="/blog/about/" title="about">about</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main id="content">
+<article>
+    <header id="post-header">
+        <h1>Stack Writeup</h1>
+        <div>
+                <time>August 28, 2025</time>
+            </div>
+    </header><h2 id="the-stack">The Stack</h2>
+<p>This challenge introduces the stack as a source of data that is already available when a program begins execution.
+On x86-64 Linux, the register rsp points to the top of the stack. At program startup, the value stored at [rsp] is argc, the number of command-line arguments passed to the program, including the program name itself.</p>
+<p>For example, if the program is run with:</p>
+<p><code>bash ./program hello world</code></p>
+<p>then argc is 3:</p>
+<pre tabindex="0"><code>./program
+hello
+world
+</code></pre><p>The goal of the challenge is to read that value from the stack and use it as the program’s exit code.</p>
+<p>Solution:</p>
+<pre tabindex="0"><code>.intel_syntax noprefix
+.section .text
+.global _start
+
+_start:
+    mov rdi, [rsp]
+    mov rax, 60
+    syscall 
+</code></pre><p>Explanation
+The key instruction is:</p>
+<p><code>mov rdi, [rsp]</code></p>
+<p>This reads the 64-bit value stored at the memory location pointed to by rsp. At startup, that value is argc.</p>
+<p>Next:</p>
+<p><code>mov rax, 60</code></p>
+<p>sets rax to 60, which is the syscall number for exit on x86-64 Linux.</p>
+<p>Finally:</p>
+<p><code>syscall</code></p>
+<p>invokes the system call. Since Linux expects the exit status in rdi, the program exits with the value of argc.</p>
+<h2 id="stack-offsets">Stack Offsets</h2>
+<p>Find the secret value on the stack at an offset of 128 bytes from rsp and use that value as the program’s exit code.</p>
+<p>rsp points to the top of the stack.
+Since stack values here are treated as 8-byte values, an offset of 128 bytes means:</p>
+<p><code>128 / 8 = 16</code>
+so the secret is effectively the 16th 8-byte slot above rsp</p>
+<p>The challenge wants us to:</p>
+<p>load the value at [rsp+128]
+place it in the correct register for exit
+invoke the exit syscall</p>
+<p>Solution:</p>
+<pre tabindex="0"><code>.intel_syntax noprefix
+.section .text
+.global _start
+
+_start:
+    mov rdi, [rsp+128]
+    mov rax, 60
+    syscall
+mov rdi, [rsp+128]
+</code></pre><p>Loads the 8-byte value located 128 bytes above the current stack pointer into rdi.</p>
+<p><code>mov rax, 60</code></p>
+<p><code>syscall</code></p>
+<p>Calls exit(rdi), so the program exits with the secret value.</p>
+<h2 id="program-arguments-on-the-stack">Program Arguments on the Stack</h2>
+<p>The goal of this challenge was to read the first program argument from the stack and then exit with that value.</p>
+<p>At program start on Linux x86-64:</p>
+<p>[rsp] contains argc
+[rsp+8] contains a pointer to argv[0]
+[rsp+16] contains a pointer to argv[1]
+The important detail is that argv[1] is not stored directly at [rsp+16].
+Instead, [rsp+16] holds an address pointing to the actual argument string.</p>
+<p>So I needed to Read the pointer to argv[1] from the stack, Dereference that pointer to access the argument data and Exit using that value</p>
+<p>Solution:</p>
+<pre tabindex="0"><code>.intel_syntax noprefix
+.section .text
+.global _start
+
+_start:
+    mov rdi, [rsp+16]
+    mov rdi, [rdi]
+    mov rax, 60
+    syscall
+Load argv[1] pointer
+
+mov rdi, [rsp+16]
+</code></pre><p>This loads the pointer to the first argument (argv[1]) into rdi.</p>
+<ol start="2">
+<li>Dereference the pointer</li>
+</ol>
+<p><code>mov rdi, [rdi]</code></p>
+<p>This reads the data stored at that address. Since the argument is a string, this grabs the first 8 bytes starting from that string.</p>
+<p>For this challenge, that works because the program only needs to exit with the first byte’s value.</p>
+<ol start="3">
+<li>Call exit</li>
+</ol>
+<pre tabindex="0"><code>mov rax, 60
+syscall
+</code></pre><p>rdi is used as the exit status.</p>
+<h2 id="popping-from-the-stack">Popping From the Stack</h2>
+<p>This challenge was about using the stack the way it is meant to be used with pop and Read the argument count (argc) from the stack and exit with that value.</p>
+<p>Solution:</p>
+<pre tabindex="0"><code>.intel_syntax noprefix
+.section .text
+.global _start
+
+_start:
+        pop rdi
+        mov rax, 60
+        syscall
+</code></pre><p>When a program starts, the stack begins with argc at the top of the stack, pointed to by rsp.</p>
+<p>So at _start:</p>
+<p>[rsp] contains argc
+pop rdi:
+copies the value at [rsp] into rdi
+increments rsp by 8
+After that, rdi holds the argument count.</p>
+<p>Then:</p>
+<p>mov rax, 60 sets up the exit syscall number on x86_64 Linux
+syscall calls exit(rdi)</p>
+<p>Since the exit status is taken from rdi, the program exits with the value of argc.</p>
+<p>Also The challenge specifically wanted pop, not just mov rdi, [rsp].</p>
+<p>The difference is:</p>
+<p>mov rdi, [rsp] reads the top of the stack
+pop rdi reads it and advances the stack pointer
+That matches the intended “stack” behavior.</p>
+<p>The checker ran the program with different numbers of arguments, and the exit code matched the total argument count each time:</p>
+<pre tabindex="0"><code>pop.elf arg0 arg1 → exit code 3
+pop.elf arg0 ... arg7 → exit code 9
+pop.elf arg0 ... arg8 → exit code 10
+</code></pre><p>That confirms the program correctly popped argc and used it as the exit status.</p>
+</article>
+
+        </main><footer id="footer">
+    Copyright © 2025 methsith
+</footer>
+</body>
+</html>

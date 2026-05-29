@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tags on methsith</title>
+    <link>http://localhost:1313/blog/tags/</link>
+    <description>Recent content in Tags on methsith</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 28 Aug 2025 11:34:14 +0530</lastBuildDate>
+    
+	<atom:link href="http://localhost:1313/blog/tags/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    
+    <item>
+      <title>Stack Writeup</title>
+      <link>http://localhost:1313/blog/stack-writeup/</link>
+      <pubDate>Thu, 28 Aug 2025 11:34:14 +0530</pubDate>
+      
+      <guid>http://localhost:1313/blog/stack-writeup/</guid>
+      <description>&lt;h2 id=&#34;the-stack&#34;&gt;The Stack&lt;/h2&gt;
+&lt;p&gt;This challenge introduces the stack as a source of data that is already available when a program begins execution.
+On x86-64 Linux, the register rsp points to the top of the stack. At program startup, the value stored at [rsp] is argc, the number of command-line arguments passed to the program, including the program name itself.&lt;/p&gt;
+&lt;p&gt;For example, if the program is run with:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;bash ./program hello world&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;then argc is 3:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;./program
+hello
+world
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The goal of the challenge is to read that value from the stack and use it as the program’s exit code.&lt;/p&gt;
+&lt;p&gt;Solution:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;.intel_syntax noprefix
+.section .text
+.global _start
+
+_start:
+    mov rdi, [rsp]
+    mov rax, 60
+    syscall 
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Explanation
+The key instruction is:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;mov rdi, [rsp]&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;This reads the 64-bit value stored at the memory location pointed to by rsp. At startup, that value is argc.&lt;/p&gt;
+&lt;p&gt;Next:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;mov rax, 60&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;sets rax to 60, which is the syscall number for exit on x86-64 Linux.&lt;/p&gt;
+&lt;p&gt;Finally:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;syscall&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;invokes the system call. Since Linux expects the exit status in rdi, the program exits with the value of argc.&lt;/p&gt;
+&lt;h2 id=&#34;stack-offsets&#34;&gt;Stack Offsets&lt;/h2&gt;
+&lt;p&gt;Find the secret value on the stack at an offset of 128 bytes from rsp and use that value as the program’s exit code.&lt;/p&gt;
+&lt;p&gt;rsp points to the top of the stack.
+Since stack values here are treated as 8-byte values, an offset of 128 bytes means:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;128 / 8 = 16&lt;/code&gt;
+so the secret is effectively the 16th 8-byte slot above rsp&lt;/p&gt;
+&lt;p&gt;The challenge wants us to:&lt;/p&gt;
+&lt;p&gt;load the value at [rsp+128]
+place it in the correct register for exit
+invoke the exit syscall&lt;/p&gt;
+&lt;p&gt;Solution:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;.intel_syntax noprefix
+.section .text
+.global _start
+
+_start:
+    mov rdi, [rsp+128]
+    mov rax, 60
+    syscall
+mov rdi, [rsp+128]
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Loads the 8-byte value located 128 bytes above the current stack pointer into rdi.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;mov rax, 60&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;syscall&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;Calls exit(rdi), so the program exits with the secret value.&lt;/p&gt;
+&lt;h2 id=&#34;program-arguments-on-the-stack&#34;&gt;Program Arguments on the Stack&lt;/h2&gt;
+&lt;p&gt;The goal of this challenge was to read the first program argument from the stack and then exit with that value.&lt;/p&gt;
+&lt;p&gt;At program start on Linux x86-64:&lt;/p&gt;
+&lt;p&gt;[rsp] contains argc
+[rsp+8] contains a pointer to argv[0]
+[rsp+16] contains a pointer to argv[1]
+The important detail is that argv[1] is not stored directly at [rsp+16].
+Instead, [rsp+16] holds an address pointing to the actual argument string.&lt;/p&gt;
+&lt;p&gt;So I needed to Read the pointer to argv[1] from the stack, Dereference that pointer to access the argument data and Exit using that value&lt;/p&gt;
+&lt;p&gt;Solution:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;.intel_syntax noprefix
+.section .text
+.global _start
+
+_start:
+    mov rdi, [rsp+16]
+    mov rdi, [rdi]
+    mov rax, 60
+    syscall
+Load argv[1] pointer
+
+mov rdi, [rsp+16]
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;This loads the pointer to the first argument (argv[1]) into rdi.&lt;/p&gt;
+&lt;ol start=&#34;2&#34;&gt;
+&lt;li&gt;Dereference the pointer&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;code&gt;mov rdi, [rdi]&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;This reads the data stored at that address. Since the argument is a string, this grabs the first 8 bytes starting from that string.&lt;/p&gt;
+&lt;p&gt;For this challenge, that works because the program only needs to exit with the first byte’s value.&lt;/p&gt;
+&lt;ol start=&#34;3&#34;&gt;
+&lt;li&gt;Call exit&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;mov rax, 60
+syscall
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;rdi is used as the exit status.&lt;/p&gt;
+&lt;h2 id=&#34;popping-from-the-stack&#34;&gt;Popping From the Stack&lt;/h2&gt;
+&lt;p&gt;This challenge was about using the stack the way it is meant to be used with pop and Read the argument count (argc) from the stack and exit with that value.&lt;/p&gt;
+&lt;p&gt;Solution:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;.intel_syntax noprefix
+.section .text
+.global _start
+
+_start:
+        pop rdi
+        mov rax, 60
+        syscall
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;When a program starts, the stack begins with argc at the top of the stack, pointed to by rsp.&lt;/p&gt;
+&lt;p&gt;So at _start:&lt;/p&gt;
+&lt;p&gt;[rsp] contains argc
+pop rdi:
+copies the value at [rsp] into rdi
+increments rsp by 8
+After that, rdi holds the argument count.&lt;/p&gt;
+&lt;p&gt;Then:&lt;/p&gt;
+&lt;p&gt;mov rax, 60 sets up the exit syscall number on x86_64 Linux
+syscall calls exit(rdi)&lt;/p&gt;
+&lt;p&gt;Since the exit status is taken from rdi, the program exits with the value of argc.&lt;/p&gt;
+&lt;p&gt;Also The challenge specifically wanted pop, not just mov rdi, [rsp].&lt;/p&gt;
+&lt;p&gt;The difference is:&lt;/p&gt;
+&lt;p&gt;mov rdi, [rsp] reads the top of the stack
+pop rdi reads it and advances the stack pointer
+That matches the intended “stack” behavior.&lt;/p&gt;
+&lt;p&gt;The checker ran the program with different numbers of arguments, and the exit code matched the total argument count each time:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;pop.elf arg0 arg1 → exit code 3
+pop.elf arg0 ... arg7 → exit code 9
+pop.elf arg0 ... arg8 → exit code 10
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;That confirms the program correctly popped argc and used it as the exit status.&lt;/p&gt;
+</description>
+    </item>
+    
+    
+    
+    <item>
+      <title>Understanding Input Output Redirections on Linux</title>
+      <link>http://localhost:1313/blog/understanding-input-output-redirections-on-linux/</link>
+      <pubDate>Fri, 13 Sep 2024 16:24:19 +0530</pubDate>
+      
+      <guid>http://localhost:1313/blog/understanding-input-output-redirections-on-linux/</guid>
+      <description>&lt;p&gt;I/O redirection in Linux is a mechanism that allows you to change the destination of input and output for commands. by default, linux commands read from the standard input (stdin) and write to the standard output (stdout) and standard error (stderr). Redirection enables you to direct these streams.&lt;/p&gt;
+&lt;h3 id=&#34;basics-of-io-redirection&#34;&gt;Basics of I/O Redirection&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;stdin, stdout, and stderr&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Standard Input (stdin)&lt;/strong&gt;: This is the default source of input for commands, typically the keyboard.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Standard Output (stdout)&lt;/strong&gt;: This is the default destination for command output, typically the terminal.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Standard Error (stderr)&lt;/strong&gt;: This is the default destination for error messages, also typically the terminal.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Operators&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;&amp;gt;&lt;/code&gt;&lt;/strong&gt;: Redirects stdout to a file, overwriting the file if it already exists.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;&amp;gt;&amp;gt;&lt;/code&gt;&lt;/strong&gt;: Redirects stdout to a file, appending to the file if it already exists.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;&amp;lt;&lt;/code&gt;&lt;/strong&gt;: Redirects stdin from a file.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;2&amp;gt;&lt;/code&gt;&lt;/strong&gt;: Redirects stderr to a file, overwriting the file if it already exists.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;2&amp;gt;&amp;gt;&lt;/code&gt;&lt;/strong&gt;: Redirects stderr to a file, appending to the file if it already exists.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;&amp;amp;&amp;gt;&lt;/code&gt;&lt;/strong&gt;: Redirects both stdout and stderr to a file.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;some-example-techniques&#34;&gt;Some Example Techniques&lt;/h3&gt;
+&lt;p&gt;&lt;strong&gt;Pipes (&lt;code&gt;|&lt;/code&gt;)&lt;/strong&gt;: In Unix Like systems pipes allow you to use the output of one command as the input to another.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;esrie@mint:~$ ls -l &lt;span class=&#34;p&#34;&gt;|&lt;/span&gt; grep Hello
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;-rw-rw-r--  &lt;span class=&#34;m&#34;&gt;1&lt;/span&gt; esrie esrie    &lt;span class=&#34;m&#34;&gt;0&lt;/span&gt; Sep &lt;span class=&#34;m&#34;&gt;13&lt;/span&gt; 21:37 Hello
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;File Descriptor Redirection&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;exec&lt;/code&gt;&lt;/strong&gt;: You can use &lt;code&gt;exec&lt;/code&gt; to redirect file descriptors.  to redirect both stdout and stderr in a script. This command saves the  current stdout and stderr to file descriptors 3 and 4. later you can restore em if needed.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nb&#34;&gt;exec&lt;/span&gt; 3&amp;gt;&lt;span class=&#34;p&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&#34;m&#34;&gt;1&lt;/span&gt; 4&amp;gt;&lt;span class=&#34;p&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&#34;m&#34;&gt;2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;Redirection Examples&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Redirect Output and Errors Simultaneously.&lt;/p&gt;
+&lt;p&gt;Imagine you want to run a command and log both its stdout and 	stderr into different files while also viewing the output on the term you can achive this using tee command combined with redirection.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;com &amp;gt; &amp;gt;&lt;span class=&#34;o&#34;&gt;(&lt;/span&gt;tee output.log&lt;span class=&#34;o&#34;&gt;)&lt;/span&gt; 2&amp;gt; &amp;gt;&lt;span class=&#34;o&#34;&gt;(&lt;/span&gt;tee error.log &amp;gt;&lt;span class=&#34;p&#34;&gt;&amp;amp;&lt;/span&gt;2&lt;span class=&#34;o&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Redirect Outputs with Conditional Execution&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;com &amp;gt; output.log 2&amp;gt; error.log &lt;span class=&#34;o&#34;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;echo&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;#34;com succeeded&amp;#34;&lt;/span&gt; &amp;gt;&amp;gt; output.log &lt;span class=&#34;o&#34;&gt;||&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;echo&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;#34;com failed&amp;#34;&lt;/span&gt; &amp;gt;&amp;gt; error.log&lt;span class=&#34;sb&#34;&gt;`&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;These examples should give you some understanding of how to use redirections with common commands in linux.&lt;/p&gt;
+&lt;p&gt;I also recommend reading this excellent blog post about &lt;a href=&#34;https://www.rozmichelle.com/pipes-forks-dups/&#34;&gt;pipes,forks, and dups by Rozmichelle&lt;/a&gt;. which provides an excellent in-depth understanding about i/o dataflow.&lt;/p&gt;
+</description>
+    </item>
+    
+    
+    
+    <item>
+      <title>Nvidia 470xx Drivers Install Guide</title>
+      <link>http://localhost:1313/blog/nvidia-470xx-drivers-install-guide/</link>
+      <pubDate>Wed, 21 Aug 2024 19:04:24 +0530</pubDate>
+      
+      <guid>http://localhost:1313/blog/nvidia-470xx-drivers-install-guide/</guid>
+      <description>&lt;p&gt;The NVIDIA 470xx driver series is a legacy branch designed for older NVIDIA graphics cards that are no longer supported by the latest driver releases. These drivers are essential for users with legacy GPUs who want to maintain proper graphics acceleration and compatibility with modern Linux distributions.
+This driver branch supports GPUs from the GeForce 600 series through some 900 series cards, as well as corresponding Quadro and Tesla models. While these are legacy drivers, they still receive critical security updates and bug fixes from NVIDIA.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;This article is recommended for people who still use Kepler (NVE0) series, GeForce 400/500/600 series cards or Tesla (NV50/G80-90-GT2XX) cards.&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;If you are using a GPU that supports Maxwell or higher architecture, it will be much easier for you to install.&lt;/strong&gt;&lt;/p&gt;
+&lt;h2 id=&#34;prerequisites-for-installing-and-building-packages&#34;&gt;Prerequisites for installing and building packages&lt;/h2&gt;
+&lt;p&gt;First, update your system and install the required packages and kernel headers. After that, you need to enable 32-bit support by uncommenting the multilib repository. You are also going to need an AUR helper.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;#!/bin/bash&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;sudo pacman -Syu --noconfirm
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;sudo pacman -S base-devel git vim --needed --noconfirm
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nv&#34;&gt;KERNEL&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;$(&lt;/span&gt;uname -r &lt;span class=&#34;p&#34;&gt;|&lt;/span&gt; cut -d&lt;span class=&#34;s1&#34;&gt;&amp;#39;-&amp;#39;&lt;/span&gt; -f2-&lt;span class=&#34;k&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;k&#34;&gt;if&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;[[&lt;/span&gt; &lt;span class=&#34;nv&#34;&gt;$KERNEL&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;==&lt;/span&gt; *&lt;span class=&#34;s2&#34;&gt;&amp;#34;zen&amp;#34;&lt;/span&gt;* &lt;span class=&#34;o&#34;&gt;]]&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;then&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    sudo pacman -S linux-zen-headers --noconfirm
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;k&#34;&gt;elif&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;[[&lt;/span&gt; &lt;span class=&#34;nv&#34;&gt;$KERNEL&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;==&lt;/span&gt; *&lt;span class=&#34;s2&#34;&gt;&amp;#34;lts&amp;#34;&lt;/span&gt;* &lt;span class=&#34;o&#34;&gt;]]&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;then&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    sudo pacman -S linux-lts-headers --noconfirm
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;k&#34;&gt;elif&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;[[&lt;/span&gt; &lt;span class=&#34;nv&#34;&gt;$KERNEL&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;==&lt;/span&gt; *&lt;span class=&#34;s2&#34;&gt;&amp;#34;hardened&amp;#34;&lt;/span&gt;* &lt;span class=&#34;o&#34;&gt;]]&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;then&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    sudo pacman -S linux-hardened-headers --noconfirm
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;k&#34;&gt;else&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    sudo pacman -S linux-headers --noconfirm
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;k&#34;&gt;fi&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;sudo sed -i &lt;span class=&#34;s1&#34;&gt;&amp;#39;/\[multilib\]/,/Include = \/etc\/pacman.d\/mirrorlist/ s/^#//&amp;#39;&lt;/span&gt; /etc/pacman.conf
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;sudo pacman -Sy --noconfirm
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;git clone https://aur.archlinux.org/yay.git
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nb&#34;&gt;cd&lt;/span&gt; yay
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;makepkg -si --noconfirm
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nb&#34;&gt;cd&lt;/span&gt; ..
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;rm -rf yay
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;installing-the-base-driver-and-opengl-packages&#34;&gt;Installing the base driver and OpenGL packages&lt;/h2&gt;
+&lt;p&gt;If you are unsure about your NVIDIA card&amp;rsquo;s supported driver family,  &lt;a href=&#34;https://nouveau.freedesktop.org/CodeNames.html&#34;&gt;you can find it  here&lt;/a&gt;&lt;/p&gt;
+&lt;table&gt;
+	&lt;thead&gt;
+			&lt;tr&gt;
+					&lt;th&gt;Driver name&lt;/th&gt;
+					&lt;th&gt;Kernel&lt;/th&gt;
+					&lt;th&gt;Base driver&lt;/th&gt;
+					&lt;th&gt;OpenGL&lt;/th&gt;
+					&lt;th&gt;OpenGL (multilib)&lt;/th&gt;
+			&lt;/tr&gt;
+	&lt;/thead&gt;
+	&lt;tbody&gt;
+			&lt;tr&gt;
+					&lt;td&gt;Turing (NV160/TUXXX) and newer&lt;/td&gt;
+					&lt;td&gt;linux&lt;/td&gt;
+					&lt;td&gt;nvidia-open&lt;/td&gt;
+					&lt;td&gt;nvidia-utils&lt;/td&gt;
+					&lt;td&gt;lib32-nvidia-utils&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;Turing (NV160/TUXXX) and newer&lt;/td&gt;
+					&lt;td&gt;any other kernel&lt;/td&gt;
+					&lt;td&gt;nvidia-open-dkms&lt;/td&gt;
+					&lt;td&gt;nvidia-utils&lt;/td&gt;
+					&lt;td&gt;lib32-nvidia-utils&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;Maxwell (NV110) series up to Ada Lovelace (NV190/ADXXX)&lt;/td&gt;
+					&lt;td&gt;linux&lt;/td&gt;
+					&lt;td&gt;nvidia&lt;/td&gt;
+					&lt;td&gt;nvidia-utils&lt;/td&gt;
+					&lt;td&gt;lib32-nvidia-utils&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;Maxwell (NV110) series up to Ada Lovelace (NV190/ADXXX)&lt;/td&gt;
+					&lt;td&gt;linux-lts&lt;/td&gt;
+					&lt;td&gt;nvidia&lt;/td&gt;
+					&lt;td&gt;nvidia-utils&lt;/td&gt;
+					&lt;td&gt;lib32-nvidia-utils&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;Maxwell (NV110) series up to Ada Lovelace (NV190/ADXXX)&lt;/td&gt;
+					&lt;td&gt;any other kernel&lt;/td&gt;
+					&lt;td&gt;nvidia-dkms&lt;/td&gt;
+					&lt;td&gt;nvidia-utils&lt;/td&gt;
+					&lt;td&gt;lib32-nvidia-utils&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;Kepler (NVE0) series&lt;/td&gt;
+					&lt;td&gt;any&lt;/td&gt;
+					&lt;td&gt;nvidia-470xx-dkms&lt;/td&gt;
+					&lt;td&gt;nvidia-470xx-utils&lt;/td&gt;
+					&lt;td&gt;lib32-nvidia-470xx-utils&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;GeForce 400/500/600 series cards [NVCx and NVDx]&lt;/td&gt;
+					&lt;td&gt;any&lt;/td&gt;
+					&lt;td&gt;nvidia-390xx-dkms&lt;/td&gt;
+					&lt;td&gt;nvidia-390xx-utils&lt;/td&gt;
+					&lt;td&gt;lib32-nvidia-390xx-utils&lt;/td&gt;
+			&lt;/tr&gt;
+			&lt;tr&gt;
+					&lt;td&gt;Tesla (NV50/G80-90-GT2XX)&lt;/td&gt;
+					&lt;td&gt;any&lt;/td&gt;
+					&lt;td&gt;nvidia-340xx-dkms&lt;/td&gt;
+					&lt;td&gt;nvidia-340xx-utils&lt;/td&gt;
+					&lt;td&gt;lib32-nvidia-340xx-utils&lt;/td&gt;
+			&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# Then install the correct drivers acording to the chart.  &lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# Example :&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;             yay -S nvidia-470xx-dkms nvidia-470xx-utils lib32-nvidia-470xx-utils
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;setting-the-kernel-parameter-and-add-early-loading-of-nvidia--modules&#34;&gt;Setting the Kernel Parameter and Add Early Loading of NVIDIA  Modules&lt;/h2&gt;
+&lt;p&gt;If you use GRUB as the bootloader run,&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;sudo vim /etc/default/grub
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;Find the line that contains &lt;span class=&#34;s2&#34;&gt;&amp;#34;GRUB_CMDLINE_LINUX_DEFAULT&amp;#34;&lt;/span&gt; and add these two parameters: nvidia-drm.modeset&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;m&#34;&gt;1&lt;/span&gt; nvidia-drm.fbdev&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;m&#34;&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# Example &lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;nv&#34;&gt;GRUB_CMDLINE_LINUX_DEFAULT&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;&amp;#34;quiet splash nvidia-drm.modeset=1 nvidia-drm.fbdev=1&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# Update grub config &lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    sudo grub-mkconfig -o /boot/grub/grub.cfg
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;if you don&amp;rsquo;t use GRUB as the bootloader, please check the documentation of your bootloader to find out how to add kernel parameters. &lt;a href=&#34;https://wiki.gentoo.org/wiki/LILO&#34;&gt;LILO&lt;/a&gt; &lt;a href=&#34;https://wiki.archlinux.org/title/Kernel_parameters#systemd-boot&#34;&gt;systemd-boot&lt;/a&gt;  &lt;a href=&#34;https://wiki.archlinux.org/title/Kernel_parameters#Limine&#34;&gt;Limine&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&#34;enable-early-loading-of-nvidia-modules&#34;&gt;Enable Early Loading of NVIDIA Modules&lt;/h2&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-zsh&#34; data-lang=&#34;zsh&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;sudo vim /etc/mkinitcpio.conf
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# Find the line that says  &amp;#34; HOOKS=() &amp;#34; and locate the word &amp;#34; kms &amp;#34;  in the parentheses and remove it. &lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# after that Find the line that says MODULES=() &lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# Modify the line to:&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;                     &lt;span class=&#34;nv&#34;&gt;MODULES&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=(&lt;/span&gt;nvidia nvidia_modeset nvidia_uvm nvidia_drm&lt;span class=&#34;o&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;                     
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# Rebuild the initramfs with&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;                     sudo mkinitcpio -P
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;pacmanhook&#34;&gt;pacman.hook&lt;/h2&gt;
+&lt;p&gt;Use a pacman hook to auto-update initramfs after NVIDIA upgrades:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-zsh&#34; data-lang=&#34;zsh&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;o&#34;&gt;[&lt;/span&gt;Trigger&lt;span class=&#34;o&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nv&#34;&gt;Operation&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;Install
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nv&#34;&gt;Operation&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;Upgrade
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nv&#34;&gt;Operation&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;Remove
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nv&#34;&gt;Type&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;Package
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# ** IMPORTANT  ** Change nvidia to your specific driver package, e.g., nvidia-470xx-dkms&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# e.g:  Modify Target=nvidia to Target=nvidia-470xx-dkms&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;#Target=nvidia &lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nv&#34;&gt;Target&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;nvidia-470xx-dkms
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nv&#34;&gt;Target&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;nvidia-open
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nv&#34;&gt;Target&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;nvidia-lts
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# If running a different kernel, modify below to match&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nv&#34;&gt;Target&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;linux
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;o&#34;&gt;[&lt;/span&gt;Action&lt;span class=&#34;o&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nv&#34;&gt;Description&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;Updating NVIDIA module in initcpio
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nv&#34;&gt;Depends&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;mkinitcpio
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nv&#34;&gt;When&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;PostTransaction
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;NeedsTargets
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nv&#34;&gt;Exec&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;/bin/sh -c &lt;span class=&#34;s1&#34;&gt;&amp;#39;while read -r trg; do case $trg in linux*) exit 0; esac; done; /usr/bin/mkinitcpio -P&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;After that you need to Move the file to &lt;strong&gt;/etc/pacman.d/hooks/&lt;/strong&gt; If the hooks folder doesn&amp;rsquo;t already exist, you may need to create a new one.&lt;/p&gt;
+&lt;h2 id=&#34;thats-it&#34;&gt;That&amp;rsquo;s it&lt;/h2&gt;
+&lt;p&gt;Now you can reboot and enjoy!&lt;/p&gt;
+&lt;p&gt;In case you face any issues related to NVIDIA graphics, you can check the &lt;a href=&#34;https://wiki.archlinux.org/title/NVIDIA/Troubleshooting&#34;&gt;ArchWiki nvidia troubleshooting guide&lt;/a&gt; .&lt;/p&gt;
+</description>
+    </item>
+    
+    
+    
+    <item>
+      <title>bspwm</title>
+      <link>http://localhost:1313/blog/bspwm/</link>
+      <pubDate>Wed, 05 Jun 2024 19:04:24 +0530</pubDate>
+      
+      <guid>http://localhost:1313/blog/bspwm/</guid>
+      <description>&lt;p&gt;&lt;strong&gt;Warning:&lt;/strong&gt; These are my personal configurations. You may need to edit  these files to fit your own preferences and setup.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://raw.githubusercontent.com/esriee/dots/refs/heads/main/i3.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+&lt;h2 id=&#34;what-is-bspwm&#34;&gt;What is bspwm&lt;/h2&gt;
+&lt;p&gt;BSPWM is a tiling window manager that arranges windows in a non-overlapping pattern. It is very easy to configure. but bspwm doesn&amp;rsquo;t handle any keyboard or pointer inputs a third party program (e.g. sxhkd) is needed in order to translate keyboard and pointer events to bspc invocations.&lt;/p&gt;
+&lt;h3 id=&#34;how-to-install-bspwm&#34;&gt;How to install bspwm&lt;/h3&gt;
+&lt;p&gt;Start by installing bspwm using your package manager. on Debian-based systems like Ubuntu, you can use&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;code&gt;sudo apt install bspwm sxhkd polybar alacritty picom&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Arch Linux&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;code&gt;sudo pacman -Sy bspwm sxhkd polybar alacritty picom &lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Void Linux&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;code&gt;sudo xbps-install bspwm sxhkd polybar alacritty picom&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;configuration-files&#34;&gt;Configuration Files&lt;/h3&gt;
+&lt;p&gt;If you want to use my configuration, which includes bspwm and other configuration files. Navigate to your home directory and execute&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;code&gt;git clone https://github.com/covencm/dots&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;moving-configuration-files&#34;&gt;Moving Configuration Files&lt;/h3&gt;
+&lt;p&gt;Once cloned, first go into the cloned repository and locate the bspwm, polybar, and other configuration files within the dotfiles repository. Then, move these files to a directory named  ~/.config/ .&lt;/p&gt;
+&lt;p&gt;to move all the configuration files at once, execute this command:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;code&gt;mv ~/dots/* ~/.config/&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;permissions&#34;&gt;Permissions&lt;/h3&gt;
+&lt;p&gt;Make these files executable&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;code&gt;chmod +x /home/(your user name here)/.config/bspwm/bspwmrc&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;code&gt;chmod +x /home/(your user name)/.config/sxhkd/sxhkdrc&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;starting-bspwm&#34;&gt;Starting Bspwm&lt;/h3&gt;
+&lt;p&gt;To start bspwm, you need to set it as your default window manager.&lt;/p&gt;
+&lt;p&gt;If you are using a Login Manager, you might need to select bspwm on your login screen.&lt;/p&gt;
+&lt;p&gt;If not,  create or edit the &lt;strong&gt;xinitrc&lt;/strong&gt; file and include the following line&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;code&gt;exec bspwm&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;That’s it!&lt;/p&gt;
+</description>
+    </item>
+    
+    
+    
+    
+  </channel>
+</rss>

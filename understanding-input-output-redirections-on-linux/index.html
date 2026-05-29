@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en"><head><script src="/blog/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=blog/livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ReverseEngineer">
+    
+    <link rel="shortcut icon" href="http://localhost:1313/blog/favicon.ico">
+    
+    <link rel="stylesheet" href="/blog/css/style.min.css">
+
+    <link rel="canonical" href="http://localhost:1313/blog/understanding-input-output-redirections-on-linux/" />
+    <title>Understanding Input Output Redirections on Linux</title>
+</head>
+<body><header id="banner">
+    <h2><a href="http://localhost:1313/blog/">methsith</a></h2>
+    <nav>
+        <ul>
+            <li>
+                <a href="/blog/" title="posts">posts</a>
+            </li><li>
+                <a href="/blog/about/" title="about">about</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main id="content">
+<article>
+    <header id="post-header">
+        <h1>Understanding Input Output Redirections on Linux</h1>
+        <div>
+                <time>September 13, 2024</time>
+            </div>
+    </header><p>I/O redirection in Linux is a mechanism that allows you to change the destination of input and output for commands. by default, linux commands read from the standard input (stdin) and write to the standard output (stdout) and standard error (stderr). Redirection enables you to direct these streams.</p>
+<h3 id="basics-of-io-redirection">Basics of I/O Redirection</h3>
+<ol>
+<li>
+<p><strong>stdin, stdout, and stderr</strong></p>
+<ul>
+<li><strong>Standard Input (stdin)</strong>: This is the default source of input for commands, typically the keyboard.</li>
+<li><strong>Standard Output (stdout)</strong>: This is the default destination for command output, typically the terminal.</li>
+<li><strong>Standard Error (stderr)</strong>: This is the default destination for error messages, also typically the terminal.</li>
+</ul>
+</li>
+<li>
+<p><strong>Operators</strong></p>
+<ul>
+<li><strong><code>&gt;</code></strong>: Redirects stdout to a file, overwriting the file if it already exists.</li>
+<li><strong><code>&gt;&gt;</code></strong>: Redirects stdout to a file, appending to the file if it already exists.</li>
+<li><strong><code>&lt;</code></strong>: Redirects stdin from a file.</li>
+<li><strong><code>2&gt;</code></strong>: Redirects stderr to a file, overwriting the file if it already exists.</li>
+<li><strong><code>2&gt;&gt;</code></strong>: Redirects stderr to a file, appending to the file if it already exists.</li>
+<li><strong><code>&amp;&gt;</code></strong>: Redirects both stdout and stderr to a file.</li>
+</ul>
+</li>
+</ol>
+<h3 id="some-example-techniques">Some Example Techniques</h3>
+<p><strong>Pipes (<code>|</code>)</strong>: In Unix Like systems pipes allow you to use the output of one command as the input to another.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">esrie@mint:~$ ls -l <span class="p">|</span> grep Hello
+</span></span><span class="line"><span class="cl">-rw-rw-r--  <span class="m">1</span> esrie esrie    <span class="m">0</span> Sep <span class="m">13</span> 21:37 Hello
+</span></span></code></pre></div><p><strong>File Descriptor Redirection</strong></p>
+<ul>
+<li><strong><code>exec</code></strong>: You can use <code>exec</code> to redirect file descriptors.  to redirect both stdout and stderr in a script. This command saves the  current stdout and stderr to file descriptors 3 and 4. later you can restore em if needed.</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nb">exec</span> 3&gt;<span class="p">&amp;</span><span class="m">1</span> 4&gt;<span class="p">&amp;</span><span class="m">2</span>
+</span></span></code></pre></div><p><strong>Redirection Examples</strong></p>
+<p>Redirect Output and Errors Simultaneously.</p>
+<p>Imagine you want to run a command and log both its stdout and 	stderr into different files while also viewing the output on the term you can achive this using tee command combined with redirection.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">com &gt; &gt;<span class="o">(</span>tee output.log<span class="o">)</span> 2&gt; &gt;<span class="o">(</span>tee error.log &gt;<span class="p">&amp;</span>2<span class="o">)</span>
+</span></span></code></pre></div><p>Redirect Outputs with Conditional Execution</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">com &gt; output.log 2&gt; error.log <span class="o">&amp;&amp;</span> <span class="nb">echo</span> <span class="s2">&#34;com succeeded&#34;</span> &gt;&gt; output.log <span class="o">||</span> <span class="nb">echo</span> <span class="s2">&#34;com failed&#34;</span> &gt;&gt; error.log<span class="sb">`</span>
+</span></span></code></pre></div><p>These examples should give you some understanding of how to use redirections with common commands in linux.</p>
+<p>I also recommend reading this excellent blog post about <a href="https://www.rozmichelle.com/pipes-forks-dups/">pipes,forks, and dups by Rozmichelle</a>. which provides an excellent in-depth understanding about i/o dataflow.</p>
+</article>
+
+        </main><footer id="footer">
+    Copyright © 2025 methsith
+</footer>
+</body>
+</html>
